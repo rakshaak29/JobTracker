@@ -8,7 +8,12 @@ import java.util.List;
 
 public interface JobApplicationRepository extends JpaRepository<JobApplication, Long> {
 
-    // Spring auto-generates the SQL from the method name!
-    // This becomes: SELECT * FROM applications WHERE status = ?
     List<JobApplication> findByStatus(ApplicationStatus status);
+
+    // Search by company name (case-insensitive, partial match)
+    List<JobApplication> findByCompanyNameContainingIgnoreCase(String companyName);
+
+    // Filter by both status and company
+    List<JobApplication> findByStatusAndCompanyNameContainingIgnoreCase(
+            ApplicationStatus status, String companyName);
 }

@@ -32,12 +32,21 @@ public class JobApplicationController {
     }
 
     // GET /applications/5
-    @GetMapping("/{id}")
-    public ResponseEntity<JobApplication> getOne(@PathVariable Long id) {
-        return repository.findById(id)
-                .map(ResponseEntity::ok)
-                .orElse(ResponseEntity.notFound().build());
+        // GET /applications?status=INTERVIEW&company=Google
+    @GetMapping
+    public List<JobApplication> getAll(
+            @RequestParam(required = false) ApplicationStatus status,
+            @RequestParam(required = false) String company) {
+        if (status != null && company != null) {
+            return repository.findByStatusAndCompanyNameContainingIgnoreCase(status, company);
+        } else if (status != null) {
+            return repository.findByStatus(status);
+        } else if (company != null) {
+            return repository.findByCompanyNameContainingIgnoreCase(company);
+        }
+        return repository.findAll();
     }
+
 
     // POST /applications  → create + log initial status
     @PostMapping
