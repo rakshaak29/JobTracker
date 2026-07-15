@@ -1,5 +1,6 @@
 package com.example.jobtracker.controller;
 
+import com.example.jobtracker.dto.DashboardStats;
 import com.example.jobtracker.model.JobApplication;
 import com.example.jobtracker.model.ApplicationStatus;
 import com.example.jobtracker.model.StatusHistory;
@@ -11,6 +12,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/applications")
@@ -36,6 +38,68 @@ public class JobApplicationController {
         }
         return repository.findAll();
     }
+        // GET /applications/stats  → retrieve job application statistics
+    @GetMapping("/stats")
+    public DashboardStats getStats() {
+        List<JobApplication> apps = repository.findAll();
+        List<StatusHistory> history = historyRepository.findAll();
+
+        DashboardStats stats = new DashboardStats();
+        stats.setTotalApplications(apps.size());
+
+        // 1. Calculate status counts (initialize all statuses to 0)
+        Map<ApplicationStatus, Long> counts = new java.util.HashMap<>();
+        for (ApplicationStatus status : ApplicationStatus.values()) {
+            counts.put(status, 0L);
+        }
+        for (JobApplication app : apps) {
+            counts.put(app.getStatus(), counts.get(app.getStatus()) + 1);
+        }
+        stats.setStatusCounts(counts);
+
+        if (apps.isEmpty()) {
+            stats.setResponseRate(0.0);
+            stats.setAverageTimeToRespondDays(0.0);
+            return stats;
+        }
+
+        // 2. Calculate response rate (percentage of applications that moved out of APPLIED)
+        long respondedCount = apps.stream()
+                .filter(app -> app.getStatus() != ApplicationStatus.APPLIED)
+                .count();
+        double responseRate = ((double) respondedCount / apps.size()) * 100.0;
+        stats.setResponseRate(Math.round(responseRate * 100.0) / 100.0); // Round to 2 decimal places
+
+        // 3. Calculate average time-to-respond in days
+        List<Long> responseTimesInDays = new java.util.ArrayList<>();
+        for (JobApplication app : apps) {
+            if (app.getStatus() == ApplicationStatus.APPLIED) {
+                continue;
+            }
+
+            // Find the earliest status change where status moved out of APPLIED
+            history.stream()
+                .filter(h -> h.getApplication().getId().equals(app.getId()))
+                .filter(h -> h.getNewStatus() != ApplicationStatus.APPLIED)
+                .min(java.util.Comparator.comparing(StatusHistory::getChangedAt))
+                .ifPresent(firstResponse -> {
+                    long days = java.time.temporal.ChronoUnit.DAYS.between(
+                        app.getDateApplied(),
+                        firstResponse.getChangedAt().toLocalDate()
+                    );
+                    responseTimesInDays.add(days);
+                });
+        }
+
+        double averageDays = responseTimesInDays.stream()
+                .mapToLong(Long::longValue)
+                .average()
+                .orElse(0.0);
+        stats.setAverageTimeToRespondDays(Math.round(averageDays * 100.0) / 100.0); // Round to 2 decimal places
+
+        return stats;
+    }
+
 
     // GET /applications/5
     @GetMapping("/{id}")
