@@ -9,13 +9,15 @@ A Spring Boot REST API to track job applications as you go through a job search 
 - **Follow-up Reminders**: Set follow-up tasks for specific applications, check what is due this week, or check overdue items.
 - **Analytics Dashboard**: Get response rates, average response time in days, and application counts grouped by status.
 - **Filtered Search**: Search and filter applications by company name (case-insensitive, partial matching) and status.
+- **Dashboard UI**: A modern, responsive single-page application dashboard featuring a dark warm charcoal theme with amber accents.
 
 ## Tech Stack
 
-- **Java 17**
-- **Spring Boot 3.x** (Web, JPA, H2)
+- **Java 17 & Spring Boot 3.x** (Web, JPA, H2)
+- **React (v18+) & Vite** (Frontend SPA dashboard)
+- **Vanilla CSS** (Custom responsive design, zero external CSS dependencies)
 - **H2 Database** (In-memory, local development console enabled)
-- **Maven** (Dependency management & builds)
+- **Maven & npm** (Dependency management & builds)
 - **Lombok** (Boilerplate code reduction)
 
 ---
@@ -26,16 +28,29 @@ A Spring Boot REST API to track job applications as you go through a job search 
 
 - Java 17+
 - Maven
+- Node.js (v18+ recommended) & npm
 
 ### Run the Application
 
+#### 1. Start the Backend API
 From the root directory:
 
 ```bash
 mvn spring-boot:run
 ```
 
-The application will start on `http://localhost:8080`.
+The Spring Boot backend will start on `http://localhost:8080`.
+
+#### 2. Start the Frontend Dashboard
+From the root directory:
+
+```bash
+cd job-tracker-ui
+npm install
+npm run dev
+```
+
+The React + Vite frontend will start on `http://localhost:5173`.
 
 ### Database Console
 You can access the H2 database web interface at `http://localhost:8080/h2-console` using:
